@@ -1,4 +1,4 @@
-import { errorize } from '../../../utils/errorize';
+import errorize from '../../../utils/errorize';
 import { module, test } from 'qunit';
 
 module('Unit | Utility | errorize');
@@ -36,5 +36,6 @@ test('errorize', function(assert) {
     ],
   };
 
-  assert.deepEqual(errorize(errors), expected, 'errorize should equal errors');
+  let errorizeObject = errorize.create({errors});
+  assert.deepEqual(errorizeObject.serialize(), expected, 'errorize should equal errors');
 });

@@ -1,19 +1,45 @@
 import Ember from 'ember';
 
-export function errorize(errors) {
-  var data = {};
-  errors = errors.responseJSON.errors;
+var errorize = Ember.Object.extend({
+  init() {
+    this._super();
+    this.set('errorsList', {});
+  },
 
-  errors.forEach((error)=> {
-    if (error.source) {
-      let field = error.source.pointer.split('/').pop().camelize();
+  passedErrorObject() {
+    return !Ember.isNone(this.get('errors'));
+  },
 
-      if (Ember.isNone(data[field])) {
-        data[field] = [];
-      }
+  buildErrorObjectFor(error) {
+    let field = this.getErrorObjectField(error);
+    let message = this.getErrorObjectMessage(error);
+    this.addOrCreateErrorForField(field, message);
+  },
 
-      data[field].push({message: error.detail});
+  getErrorObjectField(error) {
+    // { source: { pointer:'/data/attributes/email' } }
+    return (/\w+$/.exec(error.source.pointer))[0].camelize();
+  },
+
+  getErrorObjectMessage(error) {
+    return error.detail;
+  },
+
+  addOrCreateErrorForField(field, message) {
+    if (Ember.isNone(this.get('errorsList')[field])) {
+      this.get('errorsList')[field] = [{message}];
+    } else {
+      this.get('errorsList')[field].push({message});
     }
-  });
-  return data;
-}
+  },
+
+  serialize() {
+    if (!this.passedErrorObject()) {
+      return {};
+    }
+    this.get('errors.responseJSON.errors').forEach(error => this.buildErrorObjectFor(error));
+    return this.get('errorsList');
+  },
+});
+
+export default errorize;
